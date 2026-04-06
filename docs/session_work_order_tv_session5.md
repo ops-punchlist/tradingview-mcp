@@ -502,7 +502,7 @@ const RULES = {
 };
 ```
 
-**Units:** Map `FUNDING_RATE_LONG_BLOCK_PCT_PER_HR` to however `kraken.funding_rate_current` is stored (percent per hour vs decimal); use one consistent representation in code and document it in session notes.
+**Units:** Kraken **`funding_rate_current`** (PF_XBTUSD) is **USD per contract per hour**. Convert to **%/hr** with **`(fundingRate / btc.price) * 100`** where **`btc.price`** is from **`dashboard:state`** (same field the dashboard push fills). Compare that **%/hr** to `FUNDING_RATE_LONG_BLOCK_PCT_PER_HR` (0.05) and to Factor 4 bands.
 
 ---
 

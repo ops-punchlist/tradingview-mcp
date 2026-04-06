@@ -18,6 +18,7 @@ export const RULES = {
   TIER1_CLOSE_PCT: 0.5,
   MAX_LEVERAGE_PAPER: 3,
   MAX_LEVERAGE_LIVE_CEILING: 5,
+  // Compare to %/hr from (kraken fundingRate USD/h) / btc.price * 100
   FUNDING_RATE_LONG_BLOCK_PCT_PER_HR: 0.05,
   MAX_POSITION_SIZE: 0.75,
   MAX_CONCURRENT_POSITIONS: 3,
@@ -44,13 +45,16 @@ function num(v) {
   return Number.isFinite(n) ? n : null;
 }
 
-/** Map Kraken / API funding to %/hr for RULES.FUNDING_RATE_LONG_BLOCK_PCT_PER_HR */
-function fundingPctPerHr(raw) {
-  if (raw == null || raw === '') return null;
-  const n = Math.abs(Number(raw));
-  if (!Number.isFinite(n)) return null;
-  if (n < 0.005) return n * 100;
-  return n;
+/**
+ * Kraken PF_XBTUSD `fundingRate` is USD per contract per hour (signed).
+ * %/hr for strategy gates: (fundingRate / btcSpotUsd) * 100 — use `btc.price` from dashboard:state.
+ */
+function fundingPctPerHr(rateRaw, btcSpotUsd) {
+  if (rateRaw == null || rateRaw === '') return null;
+  const rate = Number(rateRaw);
+  const px = num(btcSpotUsd);
+  if (!Number.isFinite(rate) || px == null || px <= 0) return null;
+  return (rate / px) * 100;
 }
 
 function findStudyValues(chart) {
@@ -280,13 +284,13 @@ function factor3RiskReward(price, direction, chart4h) {
   };
 }
 
-function factor4Funding(rateRaw, direction) {
-  const pct = fundingPctPerHr(rateRaw);
+function factor4Funding(rateRaw, direction, btcSpotUsd) {
+  const pct = fundingPctPerHr(rateRaw, btcSpotUsd);
   if (pct == null) {
     return {
       score: 8,
       max: 15,
-      detail: 'funding null — assume neutral 8pts',
+      detail: 'funding %/hr unknown (missing rate or btc.price) — assume neutral 8pts',
       blockLong: false,
     };
   }
@@ -296,10 +300,16 @@ function factor4Funding(rateRaw, direction) {
   else if (pct <= 0.05) score = 3;
   else score = 0;
   const blockLong = direction === 'long' && pct > RULES.FUNDING_RATE_LONG_BLOCK_PCT_PER_HR;
+  const r = Number(rateRaw);
+  const px = num(btcSpotUsd);
+  const detail =
+    px != null
+      ? `${pct.toFixed(6)}%/hr (= ${r} USD/h ÷ $${Math.round(px)})`
+      : `${pct.toFixed(6)}%/hr`;
   return {
     score,
     max: 15,
-    detail: `${pct.toFixed(4)}%/hr`,
+    detail,
     blockLong,
     pct,
   };
@@ -444,7 +454,7 @@ async function main() {
 
   const f2 = factor2Confluence(price, chart4h);
   const f3 = factor3RiskReward(price, direction, chart4h);
-  const f4 = factor4Funding(fundingRaw, direction);
+  const f4 = factor4Funding(fundingRaw, direction, price);
   const f5 = factor5Macro(macro, btcMeta, direction);
 
   let total = f1.score + f2.score + f3.score + f4.score + f5.score;

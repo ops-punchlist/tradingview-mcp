@@ -12,8 +12,8 @@ _Conviction scoring + Telegram proposals + launchd — April 2026_
 Manual: `source ~/.zshrc` → `node scripts/scoring_engine.mjs` (same as `npm run scoring:run`).
 
 - **Outcome:** scorer exited **0**, updated **`dashboard:state.scoring`** in KV; **no proposal** (correct for that snapshot).
-- **Example result:** total score **7**, **`generate_proposal: false`**, **`hard_stops_triggered`:** `min_signals` (only one weak signal counted), `min_rr` (no Pine horizontal levels → no stop/target), `funding_block_long` (funding interpreted as **~0.46%/hr** vs **0.05%/hr** long gate).
-- **Interpretation:** pipeline is conservative when TV levels/indicators are sparse and when funding reads “high” under the current heuristic — **verify Kraken `funding_rate_current` units** against the exchange UI and adjust `fundingPctPerHr()` in `scoring_engine.mjs` if mis-scaled.
+- **Example result (before funding fix):** a run hit **`funding_block_long`** because an old heuristic mis-read Kraken’s **`fundingRate`** (USD/contract/hour) as if it were already a percentage. **Current code:** `fundingPctPerHr = (fundingRate / btc.price) * 100` using **`btc.price`** from `dashboard:state` (see `scoring_engine.mjs`).
+- **Interpretation:** with correct units, typical PF_XBTUSD funding is a tiny **%/hr** (e.g. ~**−0.0008%/hr** at ~$69.9k when rate ≈ **−0.559 USD/h**), so the **0.05%/hr** long gate applies to the **converted** value, not the raw USD rate.
 
 ## Work order
 
@@ -61,7 +61,7 @@ launchctl load ~/Library/LaunchAgents/com.steveonan.btc-telegram-bot.plist
 ```
 
 ## Deviations / follow-ups
-- **Funding rate units:** Kraken `funding_rate_current` is mapped with a heuristic (`< 0.005` → ×100 as %/hr). Confirm against live ticker and adjust in code if needed.
+- **Funding rate units:** Kraken **`fundingRate`** on PF_XBTUSD is **USD per contract per hour** (signed). **`funding_pct_per_hr`** = `(fundingRate / btc.price) * 100` using **`dashboard:state.btc.price`** (CoinGecko spot in the push payload).
 - **`btc.vs_200sma`:** still often `unknown` from push — macro sub-score uses other fields; enrich push later if desired.
 - **2-loss pause:** `scoring:trade_state.consecutive_losses` is not auto-incremented from Telegram yet (Session 6 journal can wire outcomes).
 - **Factor logic** is best-effort on sparse TV indicator shapes; tune `countSignals` / study name matching as your chart layout stabilizes.
