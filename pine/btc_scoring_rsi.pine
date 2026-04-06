@@ -1,0 +1,13 @@
+//@version=5
+// Companion to btc_scoring_main.pine — RSI in its own pane (TradingView limitation).
+// Add on the same KRAKEN:BTCUSD chart below the main pane.
+indicator("BTC Scoring — RSI(14)", shorttitle="BTC Scor RSI", overlay=false)
+
+len = input.int(14, "RSI length", minval=2)
+src = input.source(close, "Source")
+r = ta.rsi(src, len)
+
+plot(r, "RSI", color=color.new(color.purple, 0), linewidth=2)
+hline(50, "Midline", color=color.gray, linestyle=hline.style_dotted)
+hline(70, "Overbought", color=color.new(color.red, 70), linestyle=hline.style_dashed)
+hline(30, "Oversold", color=color.new(color.green, 70), linestyle=hline.style_dashed)

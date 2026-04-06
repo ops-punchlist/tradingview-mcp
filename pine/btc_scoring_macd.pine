@@ -1,0 +1,16 @@
+//@version=5
+// Companion to btc_scoring_main.pine — MACD in its own pane (TradingView limitation).
+// Add on the same KRAKEN:BTCUSD chart.
+indicator("BTC Scoring — MACD(12,26,9)", shorttitle="BTC Scor MACD", overlay=false)
+
+fast = input.int(12, "Fast length", minval=1)
+slow = input.int(26, "Slow length", minval=1)
+sig = input.int(9, "Signal length", minval=1)
+src = input.source(close, "Source")
+
+[macdLine, signalLine, histLine] = ta.macd(src, fast, slow, sig)
+
+plot(macdLine, "MACD", color=color.new(color.blue, 0), linewidth=2)
+plot(signalLine, "Signal", color=color.new(color.orange, 0), linewidth=1)
+plot(histLine, "Histogram", style=plot.style_columns, color=histLine >= 0 ? color.new(color.teal, 40) : color.new(color.red, 40))
+hline(0, "Zero", color=color.gray, linestyle=hline.style_dotted)

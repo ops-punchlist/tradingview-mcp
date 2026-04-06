@@ -29,6 +29,16 @@ Manual: `source ~/.zshrc` → `node scripts/scoring_engine.mjs` (same as `npm ru
 | `scoring:last_proposal_direction` | Last proposed direction for dedup |
 | `scoring:proposals` | Append-only log from Telegram Approve/Deny callbacks |
 
+## TradingView layout (for R:R / signals)
+
+Add on **KRAKEN:BTCUSD** (same symbol the push uses):
+
+1. **`pine/btc_scoring_main.pine`** — overlay: EMA 20/50, Fib retracements (50-bar high/low, ratios 0 … 1.0) as **`line.new` horizontals** + labels, swing high/low horizontals (**`pivotLegs`** default 5).
+2. **`pine/btc_scoring_rsi.pine`** — RSI(14) (separate pane; TV allows one pane per script).
+3. **`pine/btc_scoring_macd.pine`** — MACD(12,26,9) (separate pane).
+
+Paste each file into Pine Editor → Add to chart. MCP reads horizontal lines via `data lines` and labels via `data labels`.
+
 ## Implemented
 
 ### Scripts
