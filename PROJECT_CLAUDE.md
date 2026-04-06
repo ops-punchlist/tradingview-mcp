@@ -125,7 +125,9 @@ _Execute without waiting. Report in the session summary. Steve can reverse if ne
 
 If you see **“account suspended”** or **403** while the new account is fine, macOS was usually still using **old GitHub credentials**. Those cached entries were cleared from the Keychain helper for `github.com`; the next push must use your **new** login.
 
-**Easiest path if you don’t want to fight Keychain:** run **`scripts/push_via_pat.sh`** once after creating an empty repo + PAT (the script prints exact steps). Example:
+**Easiest path if you don’t want to fight Keychain:** run **`scripts/push_via_pat.sh`** once after creating an empty repo + PAT (the script prints exact steps). When GitHub asks for token **expiration**, choose **30 days** so it auto-expires.
+
+Example:
 
 ```bash
 export GITHUB_USER=your_new_username

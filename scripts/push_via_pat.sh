@@ -20,6 +20,7 @@ You need to do 3 quick things in the browser (new GitHub account), then run this
 2) Create a token (classic is fine):
    GitHub → Settings → Developer settings → Personal access tokens → Generate new (classic)
    Enable scope: repo
+   Set Expiration → Custom → 30 days (or pick “30 days” if offered)
    Copy the token (starts with ghp_)
 
 3) In Terminal, paste these TWO lines (replace with your values), then run this script:
