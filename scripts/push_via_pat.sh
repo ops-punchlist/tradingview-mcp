@@ -39,10 +39,13 @@ if [[ -z "$USER" ]]; then
   exit 1
 fi
 
-URL="https://x-access-token:${GITHUB_PAT}@github.com/${USER}/${REPO}.git"
+TOKEN_URL="https://x-access-token:${GITHUB_PAT}@github.com/${USER}/${REPO}.git"
+CLEAN_URL="https://github.com/${USER}/${REPO}.git"
 echo "Pushing main → ${USER}/${REPO} ..."
-git push -u "$URL" main
-git remote set-url origin "https://github.com/${USER}/${REPO}.git"
+git remote set-url origin "$CLEAN_URL"
+# Push via token URL once, but do NOT use -u (avoids saving the PAT inside .git/config)
+git push "$TOKEN_URL" main:main
+git branch --set-upstream-to=origin/main main
 echo ""
-echo "Done. origin now points to https://github.com/${USER}/${REPO}.git"
+echo "Done. origin → ${CLEAN_URL} and main tracks origin/main (no token stored in repo config)."
 echo "Next: unset GITHUB_PAT"
