@@ -109,7 +109,25 @@ _Execute without waiting. Report in the session summary. Steve can reverse if ne
 | Session 3 notes | `session_notes_tv_session3.md` |
 | Session 4 notes | `session_notes_tv_session4.md` |
 | Schedule (Mac) | LaunchAgent `com.steveonan.btc-dashboard-push` |
-| Git | This directory is the repo root (`origin/main`) — not `~/` or `Crypto Trading/` parent |
+| Git | This directory is the repo root — not `~/` or `Crypto Trading/` parent |
+
+---
+
+## GitHub remotes (new account)
+
+- **`upstream`** → `https://github.com/tradesdontlie/tradingview-mcp` (original MCP; pull fixes with `git fetch upstream` when needed).
+- **`origin`** → **your** empty GitHub repo (HTTPS URL). Set it with:
+  ```bash
+  chmod +x scripts/set_github_origin.sh
+  ./scripts/set_github_origin.sh "https://github.com/YOUR_USER/YOUR_REPO.git"
+  ```
+- **Push:** `git push -u origin main`
+
+If you see **“account suspended”** or **403** while the new account is fine, macOS is usually still using **old GitHub credentials**:
+
+1. **Keychain Access** → search **`github`** → delete **internet password** entries for `github.com`, **or**
+2. Push again and sign in when prompted: `git push -u origin main`
+3. Optional: use **SSH** instead — `git remote set-url origin git@github.com:YOUR_USER/YOUR_REPO.git` (add your **new** SSH key in GitHub → Settings → SSH keys).
 
 ---
 
