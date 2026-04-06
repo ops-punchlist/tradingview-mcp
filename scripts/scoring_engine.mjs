@@ -504,11 +504,12 @@ async function main() {
   const winProb = g.win;
   const ev = g.grade ? computeEv(winProb, targetPct, stopPct) : -1;
 
-  let generateProposal =
+  let generateProposal = Boolean(
     g.grade &&
-    total >= RULES.MIN_SCORE_TO_PROPOSE &&
-    ev > 0 &&
-    hardStops.length === 0;
+      total >= RULES.MIN_SCORE_TO_PROPOSE &&
+      ev > 0 &&
+      hardStops.length === 0
+  );
 
   if (hardStops.includes('funding_block_long') && direction === 'long') {
     generateProposal = false;
