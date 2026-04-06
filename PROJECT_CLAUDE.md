@@ -1,5 +1,5 @@
 # CLAUDE.md — TradingView MCP Project
-_v1.1 — April 5, 2026_
+_v1.2 — April 6, 2026_
 _Drop this file in the project root. Claude Code reads it automatically on session start._
 
 ---
@@ -108,7 +108,14 @@ _Execute without waiting. Report in the session summary. Steve can reverse if ne
 | Wrangler config | `wrangler.toml` (binding `TRADING_DASHBOARD`) |
 | Session 3 notes | `session_notes_tv_session3.md` |
 | Session 4 notes | `session_notes_tv_session4.md` |
-| Schedule (Mac) | LaunchAgent `com.steveonan.btc-dashboard-push` |
+| Session 5 notes | `session_notes_tv_session5.md` |
+| Session 5 work order | `docs/session_work_order_tv_session5.md` |
+| Scoring engine | `scripts/scoring_engine.mjs` (`npm run scoring:run`) |
+| Telegram bot | `scripts/telegram_bot.mjs` (`sendProposalCard`, `npm run telegram:daemon` for foreground test) |
+| KV helper | `scripts/kv_cloudflare.mjs` (GET/PUT shared with push + scorer) |
+| Schedule (Mac) | LaunchAgent `com.steveonan.btc-dashboard-push` (5 min) |
+| Scoring schedule (Mac) | LaunchAgent `com.steveonan.btc-scoring-engine` (60 min) |
+| Telegram daemon (Mac) | LaunchAgent `com.steveonan.btc-telegram-bot` (`KeepAlive`) |
 | Git | This directory is the repo root — not `~/` or `Crypto Trading/` parent |
 | GitHub `origin` | `ops-punchlist/tradingview-mcp` → `https://github.com/ops-punchlist/tradingview-mcp.git` |
 
@@ -173,4 +180,4 @@ At the end of every session, update the Quick Ref table above with:
 - Blockers found or resolved
 - What's next
 
-_v1.1 — April 5, 2026_
+_v1.2 — April 6, 2026_

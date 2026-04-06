@@ -37,9 +37,13 @@ _TradingView + Kraken wiring in `dashboard_push.mjs` + scheduling — April 2026
 - **`.gitignore`:** local Word doc **`BTC Loan Strategy March2026 2.docx`** is ignored so it stays off GitHub and out of `git status`.
 - **Do not** run `git init` in **`~`** or **`Documents`** — it made Cursor think your whole home folder was a repo. A mistaken `~/.git` was **renamed to** `~/.git-accidental-home-init-backup-*` (no commits were lost). To undo: move that folder back to `~/.git` (not recommended).
 
-## Session 5 (next)
+## Session 5
 
-- Conviction scoring engine, EV, strategy doc alignment (`btc_perp_strategy_v1.docx`).
+- **Done** — see **`session_notes_tv_session5.md`** and **`docs/session_work_order_tv_session5.md`**.
+
+## Session 6 (next)
+
+- Trade journal, graduation tracker, weekly digest; wire Telegram outcomes to bankroll / loss streaks.
 
 ---
 

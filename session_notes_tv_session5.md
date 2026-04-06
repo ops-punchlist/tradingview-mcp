@@ -1,6 +1,34 @@
 # Session Notes — TradingView MCP Session 5
 _Conviction scoring + Telegram proposals + launchd — April 2026_
 
+## Status (shipped)
+
+- **`main`** on GitHub includes Session 5 code (`afb9db5` area: scoring engine, Telegram daemon, KV merge, plists, these notes).
+- **LaunchAgents** installed under **`~/Library/LaunchAgents/`** and **`launchctl load`**’d: **`com.steveonan.btc-scoring-engine`** (hourly) + **`com.steveonan.btc-telegram-bot`** (`KeepAlive`).
+- **Telegram:** `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` confirmed set in shell; wrappers **`source ~/.zshrc`** so **`launchd`** jobs see them.
+
+## First validation run (2026-04-06)
+
+Manual: `source ~/.zshrc` → `node scripts/scoring_engine.mjs` (same as `npm run scoring:run`).
+
+- **Outcome:** scorer exited **0**, updated **`dashboard:state.scoring`** in KV; **no proposal** (correct for that snapshot).
+- **Example result:** total score **7**, **`generate_proposal: false`**, **`hard_stops_triggered`:** `min_signals` (only one weak signal counted), `min_rr` (no Pine horizontal levels → no stop/target), `funding_block_long` (funding interpreted as **~0.46%/hr** vs **0.05%/hr** long gate).
+- **Interpretation:** pipeline is conservative when TV levels/indicators are sparse and when funding reads “high” under the current heuristic — **verify Kraken `funding_rate_current` units** against the exchange UI and adjust `fundingPctPerHr()` in `scoring_engine.mjs` if mis-scaled.
+
+## Work order
+
+- Spec: **`docs/session_work_order_tv_session5.md`** (constants, gates, Telegram architecture).
+
+## KV keys used by Session 5
+
+| Key | Purpose |
+|-----|---------|
+| `dashboard:state` | Read chart/macro/kraken; **merge** `scoring` on push; scorer writes `scoring.*` |
+| `scoring:trade_state` | Pause / drawdown gates; seeded on first scorer run |
+| `scoring:last_proposal_at` | ISO string dedup window (`RULES.PROPOSAL_DEDUP_HOURS`) |
+| `scoring:last_proposal_direction` | Last proposed direction for dedup |
+| `scoring:proposals` | Append-only log from Telegram Approve/Deny callbacks |
+
 ## Implemented
 
 ### Scripts
@@ -40,3 +68,7 @@ launchctl load ~/Library/LaunchAgents/com.steveonan.btc-telegram-bot.plist
 
 ## Session 6 (suggested)
 - Trade journal, graduation tracker, weekly digest; wire approve/deny → bankroll + consecutive loss counter.
+
+---
+
+_Session 5 delivered — April 6, 2026_
