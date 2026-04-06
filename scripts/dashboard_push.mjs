@@ -11,6 +11,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { kvGetText, kvPutText } from './kv_cloudflare.mjs';
 
 const execFileAsync = promisify(execFile);
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -128,6 +129,14 @@ async function readChartBundle(tfMinutes) {
 async function main() {
   console.log('Starting dashboard push...');
 
+  let existingDash = null;
+  try {
+    const raw = await kvGetText('dashboard:state');
+    if (raw) existingDash = JSON.parse(raw);
+  } catch {
+    /* first push or parse error — continue with fresh payload */
+  }
+
   const fg = await fetchJson('https://api.alternative.me/fng/?limit=1').catch(() => null);
   const btc = await fetchJson(
     'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true'
@@ -176,7 +185,15 @@ async function main() {
       balances,
       futures_positions_raw: positions,
     },
-    scoring: { last_score: null, last_grade: null, last_ev: null, last_scored_at: null },
+    scoring: {
+      last_score: null,
+      last_grade: null,
+      last_ev: null,
+      last_scored_at: null,
+      last_direction: null,
+      last_proposal_sent: null,
+      ...(existingDash?.scoring || {}),
+    },
     bankroll: {
       starting: 1000,
       current: 1000,
@@ -184,6 +201,7 @@ async function main() {
       sats_accumulated: 0,
       trade_count: 0,
       win_count: 0,
+      ...(existingDash?.bankroll || {}),
     },
   };
 
@@ -197,38 +215,7 @@ async function main() {
   }
 
   const body = JSON.stringify(payload);
-  const keyEnc = encodeURIComponent('dashboard:state');
-  const url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/storage/kv/namespaces/${CF_KV_NS}/values/${keyEnc}`;
-
-  await new Promise((resolve, reject) => {
-    const req = https.request(
-      url,
-      {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${CF_TOKEN}`,
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(body),
-        },
-      },
-      (res) => {
-        let d = '';
-        res.on('data', (c) => (d += c));
-        res.on('end', () => {
-          try {
-            const r = JSON.parse(d);
-            if (r.success) resolve(r);
-            else reject(new Error(JSON.stringify(r.errors || r)));
-          } catch {
-            reject(new Error(d.slice(0, 500)));
-          }
-        });
-      }
-    );
-    req.on('error', reject);
-    req.write(body);
-    req.end();
-  });
+  await kvPutText('dashboard:state', body);
 
   console.log('KV updated: dashboard:state');
   console.log('https://btc-trading-dashboard.pages.dev');
