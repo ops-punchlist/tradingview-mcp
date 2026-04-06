@@ -13,4 +13,5 @@ case "${1:-}" in
     ;;
 esac
 pbcopy < "$DIR/$f"
-echo "Copied $f to clipboard — paste in TradingView Pine Editor → Add to chart."
+echo "Copied $f to clipboard."
+echo "Next: TradingView → Pine Editor → Cmd+V → Save → Add to chart (KRAKEN:BTCUSD)."
