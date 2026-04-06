@@ -31,7 +31,67 @@ Build the conviction scoring engine from `btc_perp_strategy_v1.docx`. Agent read
 ## Context
 
 ### Strategy source of truth
-`btc_perp_strategy_v1.docx` — all scoring constants, weights, EV formula, and Telegram card format live there. Do not deviate from it.
+`btc_perp_strategy_v1.docx` — full narrative, diagrams, and Telegram card prose. **For code, use the canonical constants below** (pulled from the strategy doc). If anything conflicts, **these tables win for Session 5 implementation** — note any doc delta in `session_notes_tv_session5.md`.
+
+### Canonical strategy constants (Session 5 — enforce in code)
+
+**Hard rules (gates + risk)**
+| Rule | Value |
+|------|--------|
+| Min score to propose | **50** / 100 |
+| Min signals (confluence) | **3** distinct signals for a tradeable setup |
+| Min timeframe | **1H setup confirmed by 4H** — do not propose if 1H and 4H trend alignment conflict (see Factor 1 + gate below) |
+| Min R:R | **2:1** — below → Factor 3 = **0**, **no trade** |
+| Funding gate (longs) | **> 0.05%/hr** → **0** pts on Factor 4 **and block long entries** |
+| Stop loss (max distance) | **15%** from entry — if structural stop would exceed 15%, **no trade** (or cap stop to 15% only if strategy doc allows; default **veto** if stop > 15%) |
+| Tier 1 take-profit | **30–35%** gain target band; **close 50%** at T1 (document on proposal card; paper only) |
+| Max leverage (ceiling) | **5x** (strategy); paper session may apply a lower effective cap (see grade table note) |
+| Max position size | **75%** of bankroll (ceiling by grade) |
+| Max concurrent positions | **3** |
+| Consecutive loss pause | **2** consecutive losses → **48h** mandatory pause (no new proposals until `pause_until`) |
+| Bankroll death | **25%** drawdown from starting bankroll → **full stop** (no proposals) |
+
+**Factor weights**
+
+| Factor | Points |
+|--------|--------|
+| Trend alignment (1H / 4H / Daily) | 25 |
+| Technical signal confluence | 25 |
+| Risk/reward quality | 20 |
+| Funding rate environment | 15 |
+| Macro context + thesis overlay | 15 |
+| **Total** | **100** |
+
+**Grade → parameters (strategy)**
+
+| Score | Grade | Win prob | Max leverage | Max size |
+|-------|-------|----------|--------------|----------|
+| 80–100 | A | 65% | 5x | 75% |
+| 65–79 | B | 55% | 3x | 50% |
+| 50–64 | C | 45% | 2x | 25% |
+| <50 | — | No trade | — | — |
+
+**Paper trading (Session 5):** Objective is paper only. Use the grade table’s **win prob** and **max size** as-is; for **leverage**, use `effective_leverage = min(grade_max_leverage, MAX_LEVERAGE_PAPER)` where `MAX_LEVERAGE_PAPER` is in `RULES` (e.g. 3) so you never exceed the paper cap while preserving relative A > B > C.
+
+**EV (required for proposal)**  
+`EV = (Win% × Target%) − (Loss% × Stop%)` with `Loss% = 1 − Win%`. **EV must be > 0** or **no proposal**, regardless of score.
+
+**Factor 4 — funding rate scoring**
+
+| Rate (/hr) | Points | Notes |
+|------------|--------|--------|
+| < 0.02% | 15 | |
+| 0.02% – 0.04% | 8 | |
+| 0.04% – 0.05% | 3 | |
+| > 0.05% | 0 | **Block longs** |
+
+**Factor 5 — macro base + thesis**  
+- 3–4 bullish macro signals → **10** base pts  
+- 2 bullish / 2 neutral → **7** pts  
+- Mixed / neutral → **4** pts  
+- 3–4 bearish → **1** pt  
+- Thesis overlay → **±3** pts (per existing direction rules)  
+- **Hard downgrade:** 3–4 bearish **and** thesis negative for trade direction → drop **one** grade (A→B, B→C, C→no trade)
 
 ### Current KV payload shape (`dashboard:state`)
 ```json
@@ -69,7 +129,13 @@ TELEGRAM_CHAT_ID     # Steve will add this — flag if missing
 
 ## Task 1 — Build `scripts/scoring_engine.mjs`
 
-Implement all 5 factors exactly per the strategy doc. The engine reads the current KV state and produces a score object.
+Implement all 5 factors and **global gates** using **Canonical strategy constants** above. The engine reads the current KV state and produces a score object.
+
+### Global gates (evaluate before proposing)
+1. **Min timeframe — 1H confirmed on 4H:** If the proposed direction is **long**, require 4H not bearish (and ideally bullish/mixed per Factor 1); if **short**, require 4H not bullish. If 1H and 4H directions **contradict**, set `generate_proposal: false` and record `hard_stops_triggered` e.g. `["1h_not_confirmed_by_4h"]`. If 4H data missing, be conservative (no trade or require explicit approval in session notes).
+2. **Min signals:** Count **distinct** signals from the Factor 2 list (RSI, MACD, fib, volume, MA cross). Need **≥ 3** for any proposal. Below 3 → Factor 2 = **0** and **`generate_proposal: false`** even if the raw 100-point sum ≥ 50.
+3. **Stop max 15%:** If the structural stop implies **> 15%** loss from entry, **no trade** (add to `hard_stops_triggered`).
+4. **`scoring:trade_state`:** Honor **2-loss / 48h pause** and **25% drawdown** (Task 6) before scoring or sending.
 
 ### Factor 1 — Trend Alignment (25 pts)
 ```
@@ -85,11 +151,12 @@ Direction detection logic:
 - Otherwise → neutral/mixed
 
 ### Factor 2 — Technical Signal Confluence (25 pts)
+**Minimum 3 signals** required by strategy; banding:
 ```
 4+ signals present → 25 pts
 3 strong signals → 18 pts
 3 signals but weak → 10 pts
-Below 3 signals → 0 pts
+Below 3 signals → 0 pts — also triggers global “no trade” gate
 ```
 Signals to check from indicator data:
 1. RSI (bullish: >55, bearish: <45)
@@ -112,6 +179,8 @@ R:R derived from nearest Fibonacci levels in `levels` array:
 - Stop = nearest support/fib below entry (long) or above (short)
 - Target = next resistance/fib level above entry (long) or below (short)
 - If no levels available, score 0 and note "no technical levels available"
+- **Tier 1 (strategy):** For proposal copy and EV, use a **primary target** in the **30–35% gain** band when structural levels allow; otherwise use level-derived target and document. **At T1, plan to close 50%** (paper); state this on the Telegram card.
+- After stop/target are chosen, verify **stop distance ≤ 15%** (global gate).
 
 ### Factor 4 — Funding Rate Environment (15 pts)
 ```
@@ -146,13 +215,13 @@ Count bullish/neutral/bearish signals:
 If 3-4 bearish macro signals AND thesis overlay negative for trade direction → downgrade one grade (A→B, B→C, C→no trade). Log this downgrade clearly.
 
 ### Score → Grade → Trade Parameters
+Use the **Grade → parameters (strategy)** table exactly for `win_prob`, `max_leverage` (grade), and `max_size`. Apply **paper** effective leverage: `min(grade_max_leverage, RULES.MAX_LEVERAGE_PAPER)`.
 ```
-80-100 → Grade A: win_prob=65%, max_leverage=3x (paper cap), max_size=75%
-65-79  → Grade B: win_prob=55%, max_leverage=3x (paper cap), max_size=50%
+80-100 → Grade A: win_prob=65%, max_leverage=5x (strategy) → cap by MAX_LEVERAGE_PAPER, max_size=75%
+65-79  → Grade B: win_prob=55%, max_leverage=3x, max_size=50%
 50-64  → Grade C: win_prob=45%, max_leverage=2x, max_size=25%
 <50    → No trade
 ```
-Note: leverage capped at 3x during paper trading regardless of grade.
 
 ### EV Calculation
 ```
@@ -182,6 +251,8 @@ If EV <= 0 → no proposal generated regardless of score.
   "target_1": 73900,
   "stop_pct": 2.45,
   "target_pct": 6.33,
+  "tier1_target_pct_band": [30, 35],
+  "tier1_close_pct": 50,
   "leverage": 3,
   "position_size_pct": 50,
   "funding_rate": 0.031,
@@ -219,6 +290,7 @@ EV: +8.45%
 Entry: $69,500
 Stop: $67,800 (2.45% loss)
 Target 1: $73,900 (6.33% gain)
+Tier 1 plan: 30–35% gain band — close 50% at T1 (paper)
 Target 2: Trailing from T1
 Leverage: 3x (paper)
 Position size: 50% of bankroll
@@ -370,6 +442,7 @@ Create KV key `scoring:trade_state`:
 Scoring engine reads this on every run:
 - If `pause_until` is set and current time < `pause_until` → skip scoring, log "48hr pause active"
 - If `bankroll_current` <= 75% of `bankroll_starting` → skip scoring, log "25% drawdown — full stop"
+- **2 consecutive losses** (strategy) → set `pause_until` to **now + 48h**; increment only on **approved** paper outcomes you define in session notes (e.g. manual journal sync later; Session 5 may stub loss counting until journal exists)
 - Write updated state after every approved/denied proposal outcome (when Steve responds via Telegram)
 
 ---
@@ -406,22 +479,30 @@ Write `session_notes_tv_session5.md` covering:
 
 ## Hard Rules from Strategy Doc — Enforce in Code
 
-These are non-negotiable. Hardcode as constants, never as configurable parameters:
+These are non-negotiable. Hardcode as constants, never as configurable parameters (must match **Canonical strategy constants**):
 
 ```javascript
 const RULES = {
   MIN_SCORE_TO_PROPOSE: 50,
-  MIN_RR_RATIO: 2.0,          // below this → Factor 3 = 0, no trade
-  MAX_LEVERAGE_PAPER: 3,       // paper trading cap
-  MAX_LEVERAGE_LIVE: 5,        // absolute ceiling
-  FUNDING_RATE_LONG_BLOCK: 0.0005,  // 0.05%/hr — block long entries
-  MAX_POSITION_SIZE: 0.75,     // 75% ceiling
+  MIN_SIGNALS_REQUIRED: 3,     // confluence; below → no trade (gate)
+  MIN_RR_RATIO: 2.0,            // below → Factor 3 = 0, no trade
+  MAX_STOP_LOSS_PCT: 0.15,      // 15% max stop distance from entry
+  TIER1_TARGET_GAIN_MIN_PCT: 30,
+  TIER1_TARGET_GAIN_MAX_PCT: 35,
+  TIER1_CLOSE_PCT: 0.5,         // close 50% at T1 (paper)
+  MAX_LEVERAGE_PAPER: 3,        // effective cap min(grade, this) for Session 5
+  MAX_LEVERAGE_LIVE_CEILING: 5, // strategy ceiling (live future)
+  FUNDING_RATE_LONG_BLOCK_PCT_PER_HR: 0.05, // > this → 0 pts + block longs (match Kraken field units in code)
+  MAX_POSITION_SIZE: 0.75,      // 75% grade ceiling
   MAX_CONCURRENT_POSITIONS: 3,
+  CONSECUTIVE_LOSSES_FOR_PAUSE: 2,
   CONSECUTIVE_LOSS_PAUSE_HOURS: 48,
-  DRAWDOWN_FULL_STOP_PCT: 0.25,
+  DRAWDOWN_FULL_STOP_PCT: 0.25, // bankroll death — stop proposals
   PROPOSAL_DEDUP_HOURS: 4,
 };
 ```
+
+**Units:** Map `FUNDING_RATE_LONG_BLOCK_PCT_PER_HR` to however `kraken.funding_rate_current` is stored (percent per hour vs decimal); use one consistent representation in code and document it in session notes.
 
 ---
 
