@@ -51,12 +51,13 @@ if barstate.islast
     int x1 = bar_index - lookback + 1
     int x2 = bar_index
 
-    // Fib from low (0.0) to high (1.0): price = lo + range * ratio
+    // Classic retracement from the 50-bar HIGH (same idea as TV Fib tool, impulse low→high):
+    // ratio 0 = at high, 1 = at low; e.g. 0.618 → price = high − 61.8% of range (NOT low + 61.8%).
     array<float> ratios = array.from(0.0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0)
     int nr = array.size(ratios)
     for i = 0 to nr - 1
         float r = array.get(ratios, i)
-        float prc = lo + rng * r
+        float prc = hi - rng * r
         line ln = line.new(x1, prc, x2, prc, extend=extend.right, color=colFib, width=1, style=line.style_solid)
         array.push(fibLines, ln)
         string txt = "Fib " + str.tostring(r)
