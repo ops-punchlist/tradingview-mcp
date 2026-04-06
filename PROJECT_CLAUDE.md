@@ -123,11 +123,18 @@ _Execute without waiting. Report in the session summary. Steve can reverse if ne
   ```
 - **Push:** `git push -u origin main`
 
-If you see **“account suspended”** or **403** while the new account is fine, macOS is usually still using **old GitHub credentials**:
+If you see **“account suspended”** or **403** while the new account is fine, macOS was usually still using **old GitHub credentials**. Those cached entries were cleared from the Keychain helper for `github.com`; the next push must use your **new** login.
 
-1. **Keychain Access** → search **`github`** → delete **internet password** entries for `github.com`, **or**
-2. Push again and sign in when prompted: `git push -u origin main`
-3. Optional: use **SSH** instead — `git remote set-url origin git@github.com:YOUR_USER/YOUR_REPO.git` (add your **new** SSH key in GitHub → Settings → SSH keys).
+**Easiest path if you don’t want to fight Keychain:** run **`scripts/push_via_pat.sh`** once after creating an empty repo + PAT (the script prints exact steps). Example:
+
+```bash
+export GITHUB_USER=your_new_username
+export GITHUB_PAT=ghp_your_one_time_token
+"/Users/steveonan/Documents/Crypto Trading/TradingViewMCP/tradingview-mcp/scripts/push_via_pat.sh"
+unset GITHUB_PAT
+```
+
+Then future pushes can use **`git push`** after you sign in via normal GitHub auth, or keep using a PAT via the same pattern.
 
 ---
 
