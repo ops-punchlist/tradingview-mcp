@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.steveonan.btc-dashboard-push</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/steveonan/Documents/Crypto Trading/TradingViewMCP/tradingview-mcp/scripts/run_push.sh</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>300</integer>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/tmp/dashboard_push.launchd.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/dashboard_push.launchd.err</string>
+</dict>
+</plist>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BTC Trading Dashboard</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --fg: #e6edf3;
+      --muted: #8b949e;
+      --accent: #e8721c;
+      --green: #2ecc71;
+      --yellow: #f39c12;
+      --red: #e74c3c;
+      --card: #161b22;
+      --border: #30363d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.45;
+    }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: #010409;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header .item {
+      display: flex;
+      flex-direction: column;
+      min-width: 7rem;
+    }
+    header .label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    header .value { font-size: 1rem; font-weight: 600; }
+    header .value.mono { color: var(--accent); }
+    .pill {
+      display: inline-block;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .pill.green { background: rgba(46, 204, 113, 0.15); color: var(--green); }
+    .pill.yellow { background: rgba(243, 156, 18, 0.15); color: var(--yellow); }
+    .pill.red { background: rgba(231, 76, 60, 0.15); color: var(--red); }
+    .pill.neutral { background: rgba(139, 148, 158, 0.15); color: var(--muted); }
+    main { padding: 1rem; max-width: 1400px; margin: 0 auto; }
+    h2 { font-size: 0.85rem; color: var(--muted); margin: 0 0 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .card h3 { margin: 0 0 0.75rem; font-size: 1rem; color: var(--accent); }
+    pre {
+      margin: 0;
+      font-size: 0.72rem;
+      overflow: auto;
+      max-height: 320px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    th, td { text-align: left; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 600; }
+    .status-row { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; }
+    .foot { font-size: 0.75rem; color: var(--muted); margin-top: 1rem; }
+    .err { color: var(--red); }
+  </style>
+</head>
+<body>
+  <header id="summary">
+    <div class="item"><span class="label">BTC</span><span class="value mono" id="sum-price">—</span></div>
+    <div class="item"><span class="label">24h</span><span class="value mono" id="sum-chg">—</span></div>
+    <div class="item"><span class="label">Fear &amp; Greed</span><span class="value" id="sum-fg">—</span></div>
+    <div class="item"><span class="label">Bankroll</span><span class="value mono" id="sum-bank">—</span></div>
+    <div class="item"><span class="label">Drawdown</span><span class="value mono" id="sum-dd">—</span></div>
+    <div class="item"><span class="label">Sats</span><span class="value mono" id="sum-sats">—</span></div>
+    <div class="item"><span class="label">Open pos</span><span class="value mono" id="sum-pos">—</span></div>
+    <div class="item"><span class="label">Updated</span><span class="value mono" id="sum-upd">—</span></div>
+  </header>
+  <main>
+    <div class="grid2">
+      <div class="card">
+        <h3>1H chart</h3>
+        <div class="mono" style="font-size:0.8rem;margin-bottom:0.5rem" id="c1-meta">—</div>
+        <pre id="c1-body">Loading…</pre>
+      </div>
+      <div class="card">
+        <h3>4H chart</h3>
+        <div class="mono" style="font-size:0.8rem;margin-bottom:0.5rem" id="c4-meta">—</div>
+        <pre id="c4-body">Loading…</pre>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h3>Conviction scoring</h3>
+        <p class="mono" id="score-panel">Session 3 — engine not wired. Showing KV placeholders.</p>
+        <pre id="score-raw">—</pre>
+      </div>
+      <div class="card">
+        <h3>Macro signals</h3>
+        <div id="macro-panel" class="status-row"></div>
+        <p class="foot" id="macro-notes"></p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Positions &amp; history</h3>
+      <p class="muted" style="color:var(--muted);font-size:0.85rem">Open positions and trade history will populate from KV once the execution journal is wired.</p>
+      <table id="pos-table">
+        <thead><tr><th>Asset</th><th>Dir</th><th>Entry</th><th>Last</th><th>P&amp;L %</th><th>Stop</th><th>Target</th></tr></thead>
+        <tbody id="pos-body"><tr><td colspan="7">No rows</td></tr></tbody>
+      </table>
+      <h2 style="margin-top:1rem">Trade history</h2>
+      <table id="hist-table">
+        <thead><tr><th>Date</th><th>Asset</th><th>Dir</th><th>Grade</th><th>EV</th><th>P&amp;L</th><th>Sats</th></tr></thead>
+        <tbody id="hist-body"><tr><td colspan="7">No rows</td></tr></tbody>
+      </table>
+    </div>
+    <p class="foot" id="fetch-status"></p>
+  </main>
+  <script>
+    const DATA_URL = '/_data';
+    function pill(label, tone) {
+      const t = tone === 'good' ? 'green' : tone === 'warn' ? 'yellow' : tone === 'bad' ? 'red' : 'neutral';
+      return '<span class="pill ' + t + '">' + label + '</span>';
+    }
+    function fmtNum(n, d) {
+      if (n == null || Number.isNaN(n)) return '—';
+      return Number(n).toLocaleString(undefined, { maximumFractionDigits: d ?? 2 });
+    }
+    function renderMacro(m) {
+      const el = document.getElementById('macro-panel');
+      const notes = document.getElementById('macro-notes');
+      if (!m) { el.innerHTML = '<span class="err">No macro block</span>'; return; }
+      const fg = m.fear_greed;
+      let fgTone = 'warn';
+      if (fg <= 25) fgTone = 'bad';
+      else if (fg >= 75) fgTone = 'good';
+      const sma = (window.__d && window.__d.btc && window.__d.btc.vs_200sma) || 'unknown';
+      let smaTone = 'neutral';
+      if (sma === 'above') smaTone = 'good';
+      if (sma === 'below') smaTone = 'bad';
+      if (sma === 'within5pct') smaTone = 'warn';
+      el.innerHTML = [
+        pill('F&amp;G ' + fg + ' ' + (m.fear_greed_label || ''), fgTone),
+        pill('BTC vs 200SMA: ' + sma, smaTone),
+        pill('Bond 10Y: ' + (m.bond_yield_10yr != null ? m.bond_yield_10yr : 'n/a'), 'neutral'),
+        pill('Oil: ' + (m.oil_trend || 'unknown'), 'neutral'),
+        pill('Thesis: ' + (m.thesis_status || 'neutral'), 'neutral'),
+      ].join('');
+      notes.textContent = [m.bond_yield_note, m.oil_note].filter(Boolean).join(' ');
+    }
+    function renderChartCard(prefix, block) {
+      document.getElementById(prefix + '-meta').textContent =
+        (block && block.symbol) ? block.symbol + ' · TF ' + block.timeframe : '—';
+      const parts = {
+        ohlcv: block && block.ohlcv,
+        indicators: block && block.indicators,
+        levels: block && block.levels,
+        error: block && block._raw_error,
+      };
+      document.getElementById(prefix + '-body').textContent = JSON.stringify(parts, null, 2);
+    }
+    async function load() {
+      const st = document.getElementById('fetch-status');
+      try {
+        const r = await fetch(DATA_URL, { cache: 'no-store' });
+        const txt = await r.text();
+        if (!r.ok) {
+          st.innerHTML = '<span class="err">/_data ' + r.status + ' — ' + txt.slice(0, 200) + '</span>';
+          return;
+        }
+        const d = JSON.parse(txt);
+        window.__d = d;
+        document.getElementById('sum-price').textContent = fmtNum(d.btc && d.btc.price, 2);
+        const ch = d.btc && d.btc.change_24h;
+        document.getElementById('sum-chg').textContent = ch != null ? fmtNum(ch, 2) + '%' : '—';
+        document.getElementById('sum-fg').innerHTML =
+          pill((d.macro && d.macro.fear_greed) + ' ' + ((d.macro && d.macro.fear_greed_label) || ''), 'neutral');
+        const b = d.bankroll || {};
+        document.getElementById('sum-bank').textContent = fmtNum(b.current, 0);
+        document.getElementById('sum-dd').textContent = (b.drawdown_pct != null ? fmtNum(b.drawdown_pct, 2) + '%' : '—');
+        document.getElementById('sum-sats').textContent = fmtNum(b.sats_accumulated, 0);
+        const k = d.kraken || {};
+        const posCount = Array.isArray(k.open_positions) ? k.open_positions.length : 0;
+        document.getElementById('sum-pos').textContent = String(posCount);
+        document.getElementById('sum-upd').textContent = (d.updated_at || '').replace('T', ' ').slice(0, 19) + ' UTC';
+        renderChartCard('c1', d.chart_1h);
+        renderChartCard('c4', d.chart_4h);
+        const sc = d.scoring || {};
+        document.getElementById('score-panel').textContent =
+          'Last score: ' + (sc.last_score != null ? sc.last_score : '—') +
+          ' · Grade: ' + (sc.last_grade || '—') +
+          ' · EV: ' + (sc.last_ev != null ? sc.last_ev : '—') +
+          ' · At: ' + (sc.last_scored_at || '—');
+        document.getElementById('score-raw').textContent = JSON.stringify(sc, null, 2);
+        renderMacro(d.macro);
+        st.textContent = 'Auto-refresh every 30s · Source ' + DATA_URL;
+      } catch (e) {
+        st.innerHTML = '<span class="err">Fetch error: ' + e.message + '</span>';
+      }
+    }
+    load();
+    setInterval(load, 30000);
+  </script>
+</body>
+</html>

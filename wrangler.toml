@@ -1,0 +1,10 @@
+# Cloudflare Pages + KV — btc-trading-dashboard (Session 3)
+# Account: CLOUDFLARE_ACCOUNT_ID=3c26eee30bc4f90d841016e831a3b29f (not the obsolete 68a2… id from early Session 2 notes)
+name = "btc-trading-dashboard"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "dashboard"
+
+[[kv_namespaces]]
+binding = "TRADING_DASHBOARD"
+id = "46cdb112832f47848a91a8f1109a0ebe"
+preview_id = "46cdb112832f47848a91a8f1109a0ebe"

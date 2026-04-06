@@ -1,4 +1,5 @@
 node_modules/
+.dashboard_cache/
 screenshots/
 scripts/current.pine
 temp_*
