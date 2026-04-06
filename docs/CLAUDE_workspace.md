@@ -1,5 +1,5 @@
 # CLAUDE.md — TradingView MCP Project
-_v1.0 — April 3, 2026_
+_v1.1 — April 5, 2026_
 _Drop this file in the project root. Claude Code reads it automatically on session start._
 
 ---
@@ -111,6 +111,7 @@ _Execute without waiting. Report in the session summary. Steve can reverse if ne
 | Session 4 notes | `tradingview-mcp/session_notes_tv_session4.md` |
 | Schedule (Mac) | LaunchAgent `com.steveonan.btc-dashboard-push` → `scripts/run_push.sh` every 5 min |
 | **Git repo root** | **`TradingViewMCP/tradingview-mcp` only** — never `git init` in `~`; see Session 4 notes if home had accidental `.git` |
+| GitHub `origin` | `ops-punchlist/tradingview-mcp` — details in `tradingview-mcp/session_notes_tv_session4.md` |
 
 ---
 
@@ -146,4 +147,4 @@ At the end of every session, update the Quick Ref table above with:
 - Blockers found or resolved
 - What's next
 
-_v1.0 — April 3, 2026_
+_v1.1 — April 5, 2026_

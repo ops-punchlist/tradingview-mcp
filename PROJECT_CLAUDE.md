@@ -1,5 +1,5 @@
 # CLAUDE.md — TradingView MCP Project
-_v1.0 — April 3, 2026_
+_v1.1 — April 5, 2026_
 _Drop this file in the project root. Claude Code reads it automatically on session start._
 
 ---
@@ -110,22 +110,23 @@ _Execute without waiting. Report in the session summary. Steve can reverse if ne
 | Session 4 notes | `session_notes_tv_session4.md` |
 | Schedule (Mac) | LaunchAgent `com.steveonan.btc-dashboard-push` |
 | Git | This directory is the repo root — not `~/` or `Crypto Trading/` parent |
+| GitHub `origin` | `ops-punchlist/tradingview-mcp` → `https://github.com/ops-punchlist/tradingview-mcp.git` |
 
 ---
 
-## GitHub remotes (new account)
+## GitHub remotes
 
 - **`upstream`** → `https://github.com/tradesdontlie/tradingview-mcp` (original MCP; pull fixes with `git fetch upstream` when needed).
-- **`origin`** → **your** empty GitHub repo (HTTPS URL). Set it with:
+- **`origin`** → **`https://github.com/ops-punchlist/tradingview-mcp.git`** (Steve’s repo). To point a clone elsewhere, use:
   ```bash
   chmod +x scripts/set_github_origin.sh
   ./scripts/set_github_origin.sh "https://github.com/YOUR_USER/YOUR_REPO.git"
   ```
-- **Push:** `git push -u origin main`
+- **Push:** `git push origin main` (tracking is `origin/main`).
 
-If you see **“account suspended”** or **403** while the new account is fine, macOS was usually still using **old GitHub credentials**. Those cached entries were cleared from the Keychain helper for `github.com`; the next push must use your **new** login.
+If you see **“account suspended”** or **403** while the account is fine, macOS was usually still using **old GitHub credentials**. Clear cached entries for `github.com` in the Keychain helper if needed.
 
-**Easiest path if you don’t want to fight Keychain:** run **`scripts/push_via_pat.sh`** once after creating an empty repo + PAT (the script prints exact steps). When GitHub asks for token **expiration**, choose **30 days** so it auto-expires.
+**PAT path:** **`scripts/push_via_pat.sh`** — sets a clean `origin` URL, pushes once via a token URL **without** `git push -u` (so the token is **not** saved in `.git/config`), then `git branch --set-upstream-to=origin/main main`. When creating a PAT, pick an **expiration** you’re comfortable with (e.g. 30 days). Always **`unset GITHUB_PAT`** after.
 
 Example:
 
@@ -172,4 +173,4 @@ At the end of every session, update the Quick Ref table above with:
 - Blockers found or resolved
 - What's next
 
-_v1.0 — April 3, 2026_
+_v1.1 — April 5, 2026_

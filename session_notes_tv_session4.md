@@ -32,6 +32,9 @@ _TradingView + Kraken wiring in `dashboard_push.mjs` + scheduling — April 2026
 ## Git (important)
 
 - **Real repo root:** `…/TradingViewMCP/tradingview-mcp` (has `origin/main`). Run all `git` commands from there.
+- **Remotes:** `upstream` → tradesdontlie/tradingview-mcp (upstream MCP). **`origin`** → **`https://github.com/ops-punchlist/tradingview-mcp.git`** (Steve’s fork; `main` tracks `origin/main`).
+- **`scripts/push_via_pat.sh`:** pushes once using a token URL, then sets `main` to track **`origin/main`** only. It does **not** use `git push -u` with the token URL, so the PAT is **not** written into `.git/config` under `branch.main.remote`. After any PAT push, run **`unset GITHUB_PAT`** in the shell.
+- **`.gitignore`:** local Word doc **`BTC Loan Strategy March2026 2.docx`** is ignored so it stays off GitHub and out of `git status`.
 - **Do not** run `git init` in **`~`** or **`Documents`** — it made Cursor think your whole home folder was a repo. A mistaken `~/.git` was **renamed to** `~/.git-accidental-home-init-backup-*` (no commits were lost). To undo: move that folder back to `~/.git` (not recommended).
 
 ## Session 5 (next)
@@ -40,4 +43,4 @@ _TradingView + Kraken wiring in `dashboard_push.mjs` + scheduling — April 2026
 
 ---
 
-_Session 4 complete — push pipeline + LaunchAgent + docs._
+_Session 4 complete — push pipeline + LaunchAgent + docs. Follow-up: `origin` wired to ops-punchlist, PAT push script hardened, local loan doc ignored._
