@@ -24,7 +24,7 @@ _TradingView + Kraken wiring in `dashboard_push.mjs` + scheduling — April 2026
 
 ## Operator checklist (Mac mini)
 
-1. **TradingView** — `--remote-debugging-port=9222` when you want live 1H/4H in KV.
+1. **TradingView + CDP (port 9222)** — The **Dock** and **`open -a TradingView`** do **not** pass Chromium flags, so MCP / `dashboard:push` won’t see CDP. **Permanent fix:** always start with **`npm run tv:launch`** (runs `scripts/launch_tv.sh`, which calls **`/Applications/TradingView.app/Contents/MacOS/TradingView --remote-debugging-port=9222`** and waits until CDP answers). Optional **`~/.zshrc`** alias: `alias tvcdp='cd "/Users/steveonan/Documents/Crypto Trading/TradingViewMCP/tradingview-mcp" && npm run tv:launch'`. Optional **login:** copy **`scripts/com.steveonan.tradingview-cdp.plist`** → **`~/Library/LaunchAgents/`**, then **`launchctl load ~/Library/LaunchAgents/com.steveonan.tradingview-cdp.plist`** — runs the same script at login (exits immediately if 9222 is already up). Unload with **`launchctl unload …`** if you don’t want auto-start.
 2. **Kraken** — `KRAKEN_API_KEY` / `KRAKEN_API_SECRET` in `~/.zshrc` for `balance` and `futures positions`.
 3. **Logs** — `tail -f /tmp/dashboard_push.log` or `/tmp/dashboard_push.launchd.log`.
 4. **`crontab`** — optional; if you use it, grant **Full Disk Access** to Terminal. Otherwise rely on LaunchAgent above.

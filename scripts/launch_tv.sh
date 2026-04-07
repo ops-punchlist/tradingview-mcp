@@ -2,6 +2,9 @@
 # Launch TradingView Desktop with Chrome DevTools on port 9222 (tv CLI / MCP).
 # Invokes the real binary inside the .app — `open -a … --args` often drops flags for Electron.
 #
+# Optional: install scripts/com.steveonan.tradingview-cdp.plist in ~/Library/LaunchAgents/
+# (RunAtLoad) so this runs at login — see session_notes_tv_session4.md.
+#
 # Env:
 #   TV_BIN              — override path to the TradingView executable
 #   TRADINGVIEW_DEBUG_PORT — default 9222
