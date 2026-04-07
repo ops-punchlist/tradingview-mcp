@@ -94,7 +94,7 @@ _Execute without waiting. Report in the session summary. Steve can reverse if ne
 | MCP config location | ~/.claude/.mcp.json |
 | MCP entry point | src/server.js |
 | TradingView Desktop | v2.14.0 (Electron 38.2.2) |
-| TradingView launch | /Applications/TradingView.app/Contents/MacOS/TradingView --remote-debugging-port=9222 |
+| TradingView launch | `npm run tv:launch` or `/Applications/TradingView.app/Contents/MacOS/TradingView --remote-debugging-port=9222` |
 | Node.js | v25.9.0 |
 | Primary asset | BTC/USD (KRAKEN:BTCUSD) |
 | CDP status | Validated 2026-04-03 |
