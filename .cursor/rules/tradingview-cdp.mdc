@@ -1,0 +1,14 @@
+---
+description: TradingView Desktop must use npm run tv:launch for CDP — not Dock or open -a
+alwaysApply: true
+---
+
+# TradingView + CDP (Steve)
+
+**Before any work that needs live chart data** (`dashboard_push.mjs`, `tv` CLI, MCP tools, CDP): remind Steve that **the Dock and `open -a TradingView` do not enable `--remote-debugging-port`**.
+
+- Run from repo: **`npm run tv:launch`** (or `bash scripts/launch_tv.sh`).
+- Optional shell habit: **`tvcdp`** alias in `~/.zshrc` → same command.
+- Verify if unsure: **`lsof -nP -iTCP:9222 -sTCP:LISTEN`** should show `TradingView` on `127.0.0.1:9222`.
+
+If `cdp_connected` / TV calls fail, first question is almost always: **was TV started via `tv:launch`, not the Dock?**
